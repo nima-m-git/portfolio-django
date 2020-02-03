@@ -1,0 +1,17 @@
+{% extends 'parking_spot/base.html' %}
+{% block content %}
+
+<html>
+    <h1>
+        Parking Spot Statistics
+    </h1>
+    <body>
+        <div>
+            <a href='{% url "stats_table" %}'>Statistic Table Entries</a>
+        </div>
+    </body>
+</html>
+
+
+
+{% endblock %}

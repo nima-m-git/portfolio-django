@@ -5,8 +5,9 @@
     <body>
         <div class='page-header'>
             <h1><a href='/parking_spot'>Parking Spot Analysis</a></h1>
-            <a href='{% url "add_entry" %}' class='top-menu' class='glyphicon glyphicon-plus'>Add Entry</a>
-            <a href='{% url "view_entries" %}' class='top-menu' class='glyphicon glyphicon-plus'>View Entries</a>
+            <a href='{% url "add_entry" %}' class='top-menu'>Add Entry</a>
+            <a href='{% url "view_entries" %}' class='top-menu'>View Entries</a>
+            <a href='{% url "stats_index" %}' class='top-menu'>View Statistics</a>
         </div>
         <div class='content container'>
             <div class='col-md-8'>

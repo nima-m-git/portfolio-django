@@ -5,8 +5,7 @@
     <form method='POST' class='post-form'>{% csrf_token %}
         {{ form.as_p }}
         <button type='submit' class='save btn btn-default'>Save</button>
-        <button type='submit' name='update' value='update'>Update Entries Table</button>
-
+        <button type='submit' name='update' value='update' formnovalidate>Update Entries Table</button>
     </form>
     <div>
         <h4>Spots entered:</h4>
