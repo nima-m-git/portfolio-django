@@ -1,0 +1,32 @@
+{% extends 'parking_spot/base.html' %}
+{% block content %}
+
+<head>
+<style>
+table, th, td {
+    border: 1px solid black;
+}
+</style>
+</head>
+
+    <table style='width:20%'>
+        <tr>
+            <th>Spot</th>
+            <th>Time (Hs)</th>
+            <th>Probability</th>
+            <th>Entries</th>
+            <th>Standard Deviation</th>
+        </tr>
+        {% for stat in stats %}
+            <tr>
+                <td>{{ stat.spot }}</td>
+                <td>{{ stat.time|stringformat:"02d" }}</td>
+                <td>{{ stat.probability }}</td>
+                <td>{{ stat.entries }}</td>
+                <td>{{ stat.std }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+
+
+{% endblock %}

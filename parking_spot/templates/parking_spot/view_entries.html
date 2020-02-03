@@ -1,0 +1,32 @@
+{% extends 'parking_spot/base.html' %}
+{% block content %}
+
+<head>
+<style>
+table, th, td {
+    border: 1px solid black;
+}
+</style>
+</head>
+
+    <table style='width:20%'>
+        <tr>
+            <th>Spot</th>
+            <th>Time (Hs)</th>
+            <th>Empty</th>
+            <th>Date Added</th>
+        </tr>
+        {% for entry in entries %}
+            <tr>
+                <td>{{ entry.spot }}</td>
+                <td>{{ entry.time|stringformat:"02d" }}</td>
+                <td>{{ entry.empty }}</td>
+                <td>{{ entry.date_added }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+
+
+{% endblock %}
+
+

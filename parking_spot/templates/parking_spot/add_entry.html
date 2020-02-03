@@ -1,0 +1,21 @@
+{% extends 'parking_spot/base.html' %}
+
+{% block content %}
+    <h2>Add entry</h2>
+    <form method='POST' class='post-form'>{% csrf_token %}
+        {{ form.as_p }}
+        <button type='submit' class='save btn btn-default'>Save</button>
+        <button type='submit' name='update' value='update'>Update Entries Table</button>
+
+    </form>
+    <div>
+        <h4>Spots entered:</h4>
+            <ul>
+                {% for spot in spots %}
+                    <li>{{ spot }}</li>
+                {% endfor %}
+            </ul>
+    </div>
+
+
+{% endblock %}
