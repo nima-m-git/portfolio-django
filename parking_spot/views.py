@@ -2,8 +2,13 @@ from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.http import HttpResponse
 
+import plotly.express as px
+import plotly.graph_objects as go
+from plotly.offline import plot
+from django_pandas.io import read_frame
+
 from parking_spot.models import Entries, Statistics
-from .forms import EntryForm
+from .forms import EntryForm, TimeForm
 
 def index(request):
     return render(request, 'parking_spot/index.html')
@@ -57,3 +62,44 @@ class Stats():
     def stats_table(request):
         stats = Statistics.objects.all().order_by('spot', 'time')
         return render(request, 'parking_spot/stats_table.html', {'stats':stats})
+
+    
+    def prob_per_time_visual(request):
+        if 'time_choice' in request.GET:
+            #show visual
+            chosen_time = request.GET.get('time')
+            # get dataframe from query equivalent
+            #('SELECT SPOT, PROBABILITY, STD, ENTRIES FROM parking_spot_stats WHERE TIME = {}'.format(time))
+            data = read_frame(Statistics.objects.all().filter(time=chosen_time))
+
+            fig = px.bar(data, x='spot', y='probability', error_y='std',
+                    hover_data=['entries'], width=1600, height=800,  
+                    #color='probability', 
+                    #color_continuous_scale='purp',
+                    #plot_bgcolor='rgba(0,0,0,0)', 
+                    # NOT WORKING -- FIX!
+                )
+        
+            fig.update_layout(
+                title={
+                    'text':'{}Hs'.format(chosen_time),
+                    'y':1.0,
+                    'x':0.5,
+                    'font':{
+                        'size': 28},
+                    },
+                xaxis_title="Spot",
+                xaxis_tickmode='linear',
+                yaxis_title="Probability",
+                font=dict(
+                    family="Courier New, monospace",
+                    size=16,
+                    color="#000000"
+                    ),
+                )
+            plot_div = plot(fig, output_type='div', include_plotlyjs=False)
+            return render(request, 'parking_spot/graph.html', context={'plot_div': plot_div})
+        else:
+            return render(request, 'parking_spot/time_form.html', {'form':TimeForm()})
+
+

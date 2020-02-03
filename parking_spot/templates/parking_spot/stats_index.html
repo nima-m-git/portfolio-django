@@ -2,12 +2,13 @@
 {% block content %}
 
 <html>
-    <h1>
+    <h2>
         Parking Spot Statistics
-    </h1>
+    </h2>
     <body>
         <div>
             <a href='{% url "stats_table" %}'>Statistic Table Entries</a>
+            <a href='{% url "prob_per_time" %}'>Probabilities at Time</a>
         </div>
     </body>
 </html>

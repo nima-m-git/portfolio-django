@@ -8,5 +8,6 @@ urlpatterns = [
     path('add_entry', views.add_entry, name='add_entry'),
     path('view_entries', views.view_entries, name='view_entries'),
     path('stats_table', views.Stats.stats_table, name='stats_table'),
-    path('stats', views.Stats.index, name='stats_index')
+    path('stats', views.Stats.index, name='stats_index'),
+    path('stats/prob_per_time', views.Stats.prob_per_time_visual, name='prob_per_time'),
 ]
