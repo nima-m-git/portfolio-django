@@ -5,7 +5,15 @@ from .models import Entries, Statistics
 TIME_CHOICES = [(m,f) for m,f in zip(
     [str(i) for i in range(24)], [str(i).zfill(2) for i in range(24)]
     )]
+TIME_CHOICES.insert(0,('','---'))
 time = forms.ChoiceField(choices= TIME_CHOICES)
+
+spots = Entries.objects.only('spot').distinct('spot')
+SPOT_CHOICES = [(x,z) for x,z in zip(spots, spots)]
+
+def spot_choices():
+    return SPOT_CHOICES
+
 
 class EntryForm(forms.ModelForm):
     time = time
@@ -17,3 +25,10 @@ class EntryForm(forms.ModelForm):
 
 class TimeForm(forms.Form):
     time = time
+
+
+
+class SpotForm(forms.Form):
+    spots = forms.MultipleChoiceField(choices=SPOT_CHOICES, widget=forms.CheckboxSelectMultiple)
+
+print(SPOT_CHOICES)

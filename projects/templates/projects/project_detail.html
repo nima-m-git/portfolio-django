@@ -12,6 +12,11 @@
         <br>
         <h5>Technology used:</h5>
         <p> {{ project.technology }}</p>
+        <div>
+            {% if project.url %}
+                <a href='{{ project.url }}'>View this project!</a>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}

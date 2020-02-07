@@ -1,10 +1,12 @@
 {% extends 'parking_spot/base.html' %}
 
 {% block content %}
-    <h3>What time do you want to view the spots' probabilities for?</h3>
+    <h3>What time(s) do you want to view the spots' probabilities for?</h3>
+    <h5>(To view a single time, just select one time)</h5>
     <form method='GET' class='post-form'>{% csrf_token %}
-        {{ form.as_p }}
-        <button type='submit' name='time_choice' value='time_choice' class='save btn btn-default'>Select</button>
+        {{ form }}
+        <button type='submit' name='time_choice' value='time_choice' class='save btn btn-default'>Select Time</button>
+        <button type='submit' name='time_choice' value='time_range' class='save btn btn-default'>Select Range</button>
     </form>
 
 {% endblock %}
