@@ -1,3 +1,4 @@
+
 from django import forms
 from .models import Entries, Statistics
 
@@ -26,7 +27,9 @@ class EntryForm(forms.ModelForm):
 class TimeForm(forms.Form):
     time = time
 
-
+class TimeRangeForm(forms.Form):
+    From = time
+    To = time
 
 class SpotForm(forms.Form):
     spots = forms.MultipleChoiceField(choices=SPOT_CHOICES, widget=forms.CheckboxSelectMultiple)

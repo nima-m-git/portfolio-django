@@ -9,7 +9,7 @@ from django_pandas.io import read_frame
 import pandas as pd
 
 from parking_spot.models import Entries, Statistics
-from .forms import EntryForm, TimeForm, SpotForm
+from .forms import EntryForm, TimeForm, SpotForm, TimeRangeForm
 
 def index(request):
     return render(request, 'parking_spot/index.html')
@@ -101,8 +101,66 @@ class Stats():
                 )
             plot_div = plot(fig, output_type='div', include_plotlyjs=False)
             return render(request, 'parking_spot/graph.html', context={'plot_div': plot_div})
+        if 'time_range' in request.GET:
+            t_from = int(request.GET.get('From'))
+            t_to = int(request.GET.get('To'))
+            if t_from > t_to:
+                time_range = [i for i in range(t_from,24)] + [i for i in range(0, t_to+1)]
+            else:
+                time_range = [i for i in range(t_from, t_to)]
+            data = read_frame(Statistics.objects.all().filter(time__in=time_range))
 
-        return render(request, 'parking_spot/time_form.html', {'form':TimeForm()})
+            fig = px.scatter(data,
+                x='time', 
+                y='probability', 
+                hover_name='spot',
+                color='spot',
+                color_continuous_scale='purp',
+                size='entries',
+                hover_data=['entries', 'std'], 
+                width=1600, height=600,
+                error_y='std',  
+                )       
+            fig.update_traces(mode='lines+markers')          
+            fig.update_layout(
+                title={
+                    'text':'Spots\' Probabiliy change over Time',
+                    'y':1.0,
+                    'x':0.5,
+                    'font':{
+                        'size': 28},
+                    },
+                xaxis_title="Time (Hours)",
+                yaxis_title="Probability",
+                font=dict(
+                    family="Courier New, monospace",
+                    size=16,
+                    color="#000000"
+                    ),
+                xaxis=dict(
+                    tickmode='linear',
+                    ticks='outside',
+                    tick0=0,
+                    dtick=1,
+                    range=[t_from-.05, t_to + 0.05]
+                    ),
+                yaxis=dict(
+                    tickmode='linear',
+                    ticks='outside',
+                    tick0=0,
+                    dtick=0.25,
+                    range=[-0.05, 1.05]
+                    ),
+                legend=go.layout.Legend(
+                    traceorder="normal",
+                    bordercolor="Black",
+                    borderwidth=1
+                    ),
+                plot_bgcolor='rgba(0,0,0,0)',
+                )   
+            plot_div = plot(fig, output_type='div', include_plotlyjs=False)
+            return render(request, 'parking_spot/graph.html', context={'plot_div': plot_div})
+        return render(request, 'parking_spot/time_form.html', {'form':TimeForm(), 'form2':TimeRangeForm()})
             
 
 
