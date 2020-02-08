@@ -3,8 +3,9 @@
 {% block content %}
     <h3>What spots do you want to view?</h3>
     <form method='GET' class='post-form'>{% csrf_token %}
-        {{ form.as_p }}
+        {{ form.as_table }}
         <button type='submit' name='spot_choice' value='spot_choice' class='save btn btn-default'>Select</button>
+        <button type='submit' name='skip' value='skip' class='save btn btn-default'>View All</button>
     </form>
 
 {% endblock %}

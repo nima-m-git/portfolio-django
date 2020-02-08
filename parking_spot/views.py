@@ -9,7 +9,7 @@ from django_pandas.io import read_frame
 import pandas as pd
 
 from parking_spot.models import Entries, Statistics
-from .forms import EntryForm, TimeForm, SpotForm, TimeRangeForm
+from .forms import EntryForm, TimeForm, SpotForm, TimeRangeForm, spot_choices as spots, ComboForm
 
 def index(request):
     return render(request, 'parking_spot/index.html')
@@ -65,6 +65,114 @@ class Stats():
         return render(request, 'parking_spot/stats_table.html', {'stats':stats})
 
     
+    def probability_charts(request):
+        if request.method == 'POST':
+            form = ComboForm(request.POST)
+            if form.is_valid():
+                if request.POST.get('spots'):
+                    spot_choices = request.POST.getlist('spots')
+                else:
+                    spot_choices = [spot for spot in Entries.objects.only('spot').distinct('spot')]
+                if 'time_choice' in request.POST:
+                    chosen_time = request.POST.get('time')
+                    # get dataframe from query equivalent 'SELECT SPOT, PROBABILITY, STD, ENTRIES FROM parking_spot_stats WHERE TIME = {}'.format(time))
+                    data = read_frame(Statistics.objects.all().filter(time__in=chosen_time, spot__in=spot_choices))
+                    data['std'] = data['std']/2
+                    fig = px.bar(data, 
+                            x='spot', 
+                            y='probability', 
+                            error_y='std',
+                            hover_data=['entries'], 
+                            width=1200, height=500,  
+                            color='entries', 
+                            color_continuous_scale='RdBu',
+                        ) 
+                    fig.update_layout(
+                        title={
+                            'text':'{}Hs'.format(chosen_time),
+                            'y':1.0,
+                            'x':0.5,
+                            'font':{
+                                'size': 28},
+                            },
+                        xaxis_title="Spot",
+                        xaxis_tickmode='array',
+                        xaxis_ticktext = spot_choices,
+                        xaxis_tickvals = spot_choices,
+                        yaxis_title="Probability",
+                        font=dict(
+                            family="Courier New, monospace",
+                            size=16,
+                            color="#000000"
+                            ),
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        )
+                    plot_div = plot(fig, output_type='div', include_plotlyjs=False)
+                    return render(request, 'parking_spot/graph.html', context={'plot_div': plot_div})
+                if 'time_range' in request.POST:
+                    t_from = int(request.POST.get('From'))
+                    t_to = int(request.POST.get('To'))
+                    if t_from > t_to:
+                        time_range = [i for i in range(t_from,24)] + [i for i in range(0, t_to+1)]
+                    else:
+                        time_range = [i for i in range(t_from, t_to+1)]
+                    data = read_frame(Statistics.objects.all().filter(time__in=time_range, spot__in=spot_choices))
+
+                    fig = px.scatter(data,
+                        x='time', 
+                        y='probability', 
+                        hover_name='spot',
+                        color='spot',
+                        color_continuous_scale='purp',
+                        size='entries',
+                        hover_data=['entries', 'std'], 
+                        width=1200, height=500,
+                        error_y='std',  
+                        )       
+                    fig.update_traces(mode='lines+markers')          
+                    fig.update_layout(
+                        title={
+                            'text':'Spots\' Probabiliy change over Time',
+                            'y':1.0,
+                            'x':0.5,
+                            'font':{
+                                'size': 28},
+                            },
+                        xaxis_title="Time (Hours)",
+                        yaxis_title="Probability",
+                        font=dict(
+                            family="Courier New, monospace",
+                            size=16,
+                            color="#000000"
+                            ),
+                        xaxis=dict(
+                            tickmode='linear',
+                            ticks='outside',
+                            tick0=0,
+                            dtick=1,
+                            range=[t_from-.05, t_to + 0.05]
+                            ),
+                        yaxis=dict(
+                            tickmode='linear',
+                            ticks='outside',
+                            tick0=0,
+                            dtick=0.25,
+                            range=[-0.05, 1.05]
+                            ),
+                        legend=go.layout.Legend(
+                            traceorder="normal",
+                            bordercolor="Black",
+                            borderwidth=1
+                            ),
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        )   
+                    plot_div = plot(fig, output_type='div', include_plotlyjs=False)
+                    return render(request, 'parking_spot/graph.html', context={'plot_div': plot_div})
+        else:
+            form = ComboForm()
+        return render(request, 'parking_spot/combo_form.html', {'form':form})
+    
+
     def prob_per_time_visual(request):
         if 'time_choice' in request.GET:
             chosen_time = request.GET.get('time')
