@@ -1,15 +1,13 @@
 {% extends 'parking_spot/base.html' %}
 
 {% block content %}
-    <h3>What time do you want to view the spots' probabilities for?</h3>
-    <form method='GET' class='post-form'>{% csrf_token %}
-        {{ form }}
-        <button type='submit' name='time_choice' value='time_choice' class='save btn btn-default'>Select</button>
-    </form>
-    <h4>Or select a range to view</h4>
-    <form method='GET' class='post-form'>{% csrf_token %}
-        {{ form2 }}
-        <button type='submit' name='time_range' value='time_range' class='save btn btn-default'>Select</button>
+    <form method='POST'>{% csrf_token %}
+        <h5>What time do you want to view the spots' probabilities for?</h5>
+        {{ form.time }}
+        <button type='submit' name='time_choice' value='time_choice' class='save btn btn-default'>Select Time</button>
+        <h4>Or select a range to view</h4>
+        {{ form.From }} {{ form.To}}
+        <button type='submit' name='time_range' value='time_range' class='save btn btn-default'>Select Range</button>
     </form>
 
 {% endblock %}

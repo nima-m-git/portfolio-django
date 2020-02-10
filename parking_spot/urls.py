@@ -9,8 +9,7 @@ urlpatterns = [
     path('view_entries', views.view_entries, name='view_entries'),
     path('stats_table', views.Stats.stats_table, name='stats_table'),
     path('stats', views.Stats.index, name='stats_index'),
-    path('stats/prob_per_time', views.Stats.prob_per_time_visual, name='prob_per_time'),
-    path('stats/spots_over_time', views.Stats.spots_over_time_visual, name='spots_over_time_visual'),
     path('stats/probability_charts', views.Stats.probability_charts, name='probability_charts'),
+    path('stats/top_entries', views.Stats.top_entries, name='top_entries'),
 ]
 

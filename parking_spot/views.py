@@ -7,9 +7,12 @@ import plotly.graph_objects as go
 from plotly.offline import plot
 from django_pandas.io import read_frame
 import pandas as pd
+import numpy as np
+
 
 from parking_spot.models import Entries, Statistics
-from .forms import EntryForm, TimeForm, SpotForm, TimeRangeForm, spot_choices as spots, ComboForm
+from .forms import EntryForm, TimeForm, SpotForm, spot_choices as spots, ComboForm, TopEntriesForm
+import parking_spot.functions as fx
 
 def index(request):
     return render(request, 'parking_spot/index.html')
@@ -64,272 +67,53 @@ class Stats():
         stats = Statistics.objects.all().order_by('spot', 'time')
         return render(request, 'parking_spot/stats_table.html', {'stats':stats})
 
-    
-    def probability_charts(request):
-        if request.method == 'POST':
-            form = ComboForm(request.POST)
-            if form.is_valid():
-                if request.POST.get('spots'):
-                    spot_choices = request.POST.getlist('spots')
-                else:
-                    spot_choices = [spot for spot in Entries.objects.only('spot').distinct('spot')]
-                if 'time_choice' in request.POST:
-                    chosen_time = request.POST.get('time')
-                    # get dataframe from query equivalent 'SELECT SPOT, PROBABILITY, STD, ENTRIES FROM parking_spot_stats WHERE TIME = {}'.format(time))
-                    data = read_frame(Statistics.objects.all().filter(time__in=chosen_time, spot__in=spot_choices))
-                    data['std'] = data['std']/2
-                    fig = px.bar(data, 
-                            x='spot', 
-                            y='probability', 
-                            error_y='std',
-                            hover_data=['entries'], 
-                            width=1200, height=500,  
-                            color='entries', 
-                            color_continuous_scale='RdBu',
-                        ) 
-                    fig.update_layout(
-                        title={
-                            'text':'{}Hs'.format(chosen_time),
-                            'y':1.0,
-                            'x':0.5,
-                            'font':{
-                                'size': 28},
-                            },
-                        xaxis_title="Spot",
-                        xaxis_tickmode='array',
-                        xaxis_ticktext = spot_choices,
-                        xaxis_tickvals = spot_choices,
-                        yaxis_title="Probability",
-                        font=dict(
-                            family="Courier New, monospace",
-                            size=16,
-                            color="#000000"
-                            ),
-                        plot_bgcolor='rgba(0,0,0,0)',
-                        )
-                    plot_div = plot(fig, output_type='div', include_plotlyjs=False)
-                    return render(request, 'parking_spot/graph.html', context={'plot_div': plot_div})
-                if 'time_range' in request.POST:
-                    t_from = int(request.POST.get('From'))
-                    t_to = int(request.POST.get('To'))
-                    if t_from > t_to:
-                        time_range = [i for i in range(t_from,24)] + [i for i in range(0, t_to+1)]
-                    else:
-                        time_range = [i for i in range(t_from, t_to+1)]
-                    data = read_frame(Statistics.objects.all().filter(time__in=time_range, spot__in=spot_choices))
 
-                    fig = px.scatter(data,
-                        x='time', 
-                        y='probability', 
-                        hover_name='spot',
-                        color='spot',
-                        color_continuous_scale='purp',
-                        size='entries',
-                        hover_data=['entries', 'std'], 
-                        width=1200, height=500,
-                        error_y='std',  
-                        )       
-                    fig.update_traces(mode='lines+markers')          
-                    fig.update_layout(
-                        title={
-                            'text':'Spots\' Probabiliy change over Time',
-                            'y':1.0,
-                            'x':0.5,
-                            'font':{
-                                'size': 28},
-                            },
-                        xaxis_title="Time (Hours)",
-                        yaxis_title="Probability",
-                        font=dict(
-                            family="Courier New, monospace",
-                            size=16,
-                            color="#000000"
-                            ),
-                        xaxis=dict(
-                            tickmode='linear',
-                            ticks='outside',
-                            tick0=0,
-                            dtick=1,
-                            range=[t_from-.05, t_to + 0.05]
-                            ),
-                        yaxis=dict(
-                            tickmode='linear',
-                            ticks='outside',
-                            tick0=0,
-                            dtick=0.25,
-                            range=[-0.05, 1.05]
-                            ),
-                        legend=go.layout.Legend(
-                            traceorder="normal",
-                            bordercolor="Black",
-                            borderwidth=1
-                            ),
-                        plot_bgcolor='rgba(0,0,0,0)',
-                        )   
-                    plot_div = plot(fig, output_type='div', include_plotlyjs=False)
-                    return render(request, 'parking_spot/graph.html', context={'plot_div': plot_div})
-        else:
-            form = ComboForm()
+    def probability_charts(request):
+        form = ComboForm(request.POST)
+        if request.method == 'POST':
+            if request.POST.get('spots'):
+                spot_choices = request.POST.getlist('spots')
+            else:
+                spot_choices = [spot for spot in Statistics.objects.only('spot').distinct('spot')]
+            if 'time_choice' in request.POST:
+                chosen_time = request.POST.get('time')
+                data = read_frame(Statistics.objects.all().filter(time=chosen_time, spot__in=spot_choices))
+                plot_div = fx.graph_one_time(data, chosen_time)
+            if 'time_range' in request.POST:
+                t_from = int(request.POST.get('From'))
+                t_to = int(request.POST.get('To'))
+                if t_from > t_to:
+                    chosen_time = [i for i in range(t_from,24)] + [i for i in range(0, t_to+1)]
+                else:
+                    chosen_time = [i for i in range(t_from, t_to+1)]
+                data = read_frame(Statistics.objects.all().filter(time__in=chosen_time, spot__in=spot_choices))
+                plot_div = fx.graph_time_range(data, chosen_time)
+            return render(request, 'parking_spot/graph.html', context={'plot_div': plot_div})
+        if 'reset' in request.GET:
+            return redirect('probability_charts')
         return render(request, 'parking_spot/combo_form.html', {'form':form})
     
+         
+    def top_entries(request):
+        if request.method == 'POST':
+            min_prob, min_entries, max_error = [request.POST.get(choice) for choice in ['min_probability', 'min_entries', 'standard_deviation']]
+            min_prob, min_entries, max_error = min_prob or 0.75, min_entries or 0.25, max_error or 0.15
 
-    def prob_per_time_visual(request):
-        if 'time_choice' in request.GET:
-            chosen_time = request.GET.get('time')
-            # get dataframe from query equivalent 'SELECT SPOT, PROBABILITY, STD, ENTRIES FROM parking_spot_stats WHERE TIME = {}'.format(time))
-            data = read_frame(Statistics.objects.all().filter(time=chosen_time))
-            data['std'] = data['std']/2
+            list_entries = Statistics.objects.all().distinct('entries').values_list('entries', flat=True).order_by('entries')
+            min_entries_value = list_entries[int(len(list_entries) * min_entries)]
 
-            fig = px.bar(data, 
-                    x='spot', 
-                    y='probability', 
-                    error_y='std',
-                    hover_data=['entries'], 
-                    width=1600, height=600,  
-                    color='entries', 
-                    color_continuous_scale='RdBu',
-                ) 
-            fig.update_layout(
-                title={
-                    'text':'{}Hs'.format(chosen_time),
-                    'y':1.0,
-                    'x':0.5,
-                    'font':{
-                        'size': 28},
-                    },
-                xaxis_title="Spot",
-                xaxis_tickmode='linear',
-                yaxis_title="Probability",
-                font=dict(
-                    family="Courier New, monospace",
-                    size=16,
-                    color="#000000"
-                    ),
-                plot_bgcolor='rgba(0,0,0,0)',
-                )
-            plot_div = plot(fig, output_type='div', include_plotlyjs=False)
-            return render(request, 'parking_spot/graph.html', context={'plot_div': plot_div})
-        if 'time_range' in request.GET:
-            t_from = int(request.GET.get('From'))
-            t_to = int(request.GET.get('To'))
-            if t_from > t_to:
-                time_range = [i for i in range(t_from,24)] + [i for i in range(0, t_to+1)]
+        
+            if 'time_choice' in request.POST:
+                chosen_time = request.POST.get('time')
+            elif 'time_range' in request.POST:
+                t_from = int(request.POST.get('From'))
+                t_to = int(request.POST.get('To'))
+                if t_from > t_to:
+                    chosen_time = [i for i in range(t_from,24)] + [i for i in range(0, t_to+1)]
+                else:
+                    chosen_time = [i for i in range(t_from, t_to+1)]
             else:
-                time_range = [i for i in range(t_from, t_to)]
-            data = read_frame(Statistics.objects.all().filter(time__in=time_range))
-
-            fig = px.scatter(data,
-                x='time', 
-                y='probability', 
-                hover_name='spot',
-                color='spot',
-                color_continuous_scale='purp',
-                size='entries',
-                hover_data=['entries', 'std'], 
-                width=1600, height=600,
-                error_y='std',  
-                )       
-            fig.update_traces(mode='lines+markers')          
-            fig.update_layout(
-                title={
-                    'text':'Spots\' Probabiliy change over Time',
-                    'y':1.0,
-                    'x':0.5,
-                    'font':{
-                        'size': 28},
-                    },
-                xaxis_title="Time (Hours)",
-                yaxis_title="Probability",
-                font=dict(
-                    family="Courier New, monospace",
-                    size=16,
-                    color="#000000"
-                    ),
-                xaxis=dict(
-                    tickmode='linear',
-                    ticks='outside',
-                    tick0=0,
-                    dtick=1,
-                    range=[t_from-.05, t_to + 0.05]
-                    ),
-                yaxis=dict(
-                    tickmode='linear',
-                    ticks='outside',
-                    tick0=0,
-                    dtick=0.25,
-                    range=[-0.05, 1.05]
-                    ),
-                legend=go.layout.Legend(
-                    traceorder="normal",
-                    bordercolor="Black",
-                    borderwidth=1
-                    ),
-                plot_bgcolor='rgba(0,0,0,0)',
-                )   
-            plot_div = plot(fig, output_type='div', include_plotlyjs=False)
-            return render(request, 'parking_spot/graph.html', context={'plot_div': plot_div})
-        return render(request, 'parking_spot/time_form.html', {'form':TimeForm(), 'form2':TimeRangeForm()})
-            
-
-
-    def spots_over_time_visual(request):
-        if 'spot_choice' in request.GET:
-            spot_choices = request.GET.getlist('spots')
-            data = read_frame(Statistics.objects.all().filter(spot__in=spot_choices))
-            data['std'] = data['std']/2
-            # if singlespot: query = ('SELECT SPOT, PROBABILITY, TIME, STD, ENTRIES FROM parking_spot_statistics WHERE SPOT = (SELECT CAST({} AS VARCHAR))'.format(selected_spots))
-            fig = px.scatter(data,
-                    x='time', 
-                    y='probability', 
-                    hover_name='spot',
-                    color='spot',
-                    color_continuous_scale='purp',
-                    size='entries',
-                    hover_data=['entries', 'std'], 
-                    width=1600, height=600,
-                    error_y='std',  
-                )       
-            fig.update_traces(mode='lines+markers')          
-            fig.update_layout(
-                title={
-                    'text':'Spots\' Probabiliy change over Time',
-                    'y':1.0,
-                    'x':0.5,
-                    'font':{
-                        'size': 28},
-                    },
-                xaxis_title="Time (Hours)",
-                yaxis_title="Probability",
-                font=dict(
-                    family="Courier New, monospace",
-                    size=16,
-                    color="#000000"
-                    ),
-                xaxis=dict(
-                    tickmode='linear',
-                    ticks='outside',
-                    tick0=0,
-                    dtick=1,
-                    range=[-.5,23.5]
-                    ),
-                yaxis=dict(
-                    tickmode='linear',
-                    ticks='outside',
-                    tick0=0,
-                    dtick=0.25,
-                    range=[-0.01, 1.01]
-                    ),
-                legend=go.layout.Legend(
-                    traceorder="normal",
-                    bordercolor="Black",
-                    borderwidth=1
-                    ),
-                plot_bgcolor='rgba(0,0,0,0)',
-                )   
-            plot_div = plot(fig, output_type='div', include_plotlyjs=False)
-            return render(request, 'parking_spot/graph.html', context={'plot_div': plot_div})
-        else:
-            return render(request, 'parking_spot/spot_form.html', {'form':SpotForm})
-            
-
-    #def recommendation(request):
+                chosen_time = [i for i in range(0, 24)]
+            data = read_frame(Statistics.objects.all().filter(probability__gte=min_prob, entries__gte=min_entries, std__lte=max_error, time__in=chosen_time).order_by('time','-probability', 'std', '-entries'))
+            return HttpResponse(data.to_html())
+        return render(request, 'parking_spot/rec_or_choice_form.html', {'form':TopEntriesForm ,'time_form':TimeForm })

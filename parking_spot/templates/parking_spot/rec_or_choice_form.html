@@ -1,0 +1,19 @@
+{% extends 'parking_spot/base.html' %}
+
+{% block content %}
+
+<form method='POST'>{% csrf_token %}
+    <div>
+        <h5>What time do you want to view the spots' probabilities for?</h5>
+        {{ time_form.time }}
+        <h4>Or select a range to view</h4>
+        {{ time_form.From }} {{ time_form.To}}
+    </div>
+    <div>
+        <h4>Select choices, or leave blank for recommended (top 25% probability, minimum 25% relative amount of entries, max 15% standard deviation).</h4>
+        {{ form.as_p }}
+        <button type='submit' name='view' value='view'>View</button>
+    </div>
+</form>
+
+{% endblock %}
