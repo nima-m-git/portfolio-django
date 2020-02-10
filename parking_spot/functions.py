@@ -92,7 +92,7 @@ def graph_time_range(data, chosen_time):
     plot_div = plot(fig, output_type='div', include_plotlyjs=False)
     return plot_div
 
-def choose_time(request):
+def choose_time(request, redirect_url):
     form = TimeForm
     if request.method == 'POST':
         if 'time_choice' in request.POST:
@@ -104,8 +104,10 @@ def choose_time(request):
                 chosen_time = [i for i in range(t_from,24)] + [i for i in range(0, t_to+1)]
             else:
                 chosen_time = [i for i in range(t_from, t_to+1)]
+            
         return chosen_time
     return render(request, 'parking_spot/time_form.html', {'form': form})
+
 
 def which_graph(data, time_choice, t_from='', t_to=''):
         if len(time_choice) == 1:

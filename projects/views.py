@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from .models import Project
+from django.http import HttpResponse
 
 def project_index(request):
     '''Show all projects'''
@@ -7,7 +8,7 @@ def project_index(request):
     context = {
         'projects': projects
     }
-    return render(request, 'project_index.html', context)
+    return render(request, 'projects/project_index.html', context)
 
 
 def project_detail(request, pk):
@@ -16,4 +17,5 @@ def project_detail(request, pk):
     context = {
         'project': project
     }
-    return render(request, 'project_detail.html', context)
+    return render(request, 'projects/project_detail.html', context)
+
