@@ -11,5 +11,7 @@ urlpatterns = [
     path('stats', views.Stats.index, name='stats_index'),
     path('stats/probability_charts', views.Stats.probability_charts, name='probability_charts'),
     path('stats/top_entries', views.Stats.top_entries, name='top_entries'),
+
+
 ]
 

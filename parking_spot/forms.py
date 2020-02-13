@@ -1,4 +1,3 @@
-
 from django import forms
 from .models import Entries, Statistics
 from operator import itemgetter
@@ -37,29 +36,6 @@ class EntryForm(forms.ModelForm):
         fields = ['spot', 'empty', 'time']
 
 
-class TimeForm(forms.Form):
-    time = forms.ChoiceField(choices= TIME_CHOICES, required=False)
-    From = forms.ChoiceField(choices= TIME_CHOICES, required=False)
-    To = forms.ChoiceField(choices= TIME_CHOICES, required=False)
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        time = cleaned_data.get('time')
-        From = cleaned_data.get('From')
-        To = cleaned_data.get('To')
-
-        if not time and not (From and To):
-            raise forms.ValidationError('Please fill in both fields in the set.')
-        if time and (From or To):
-            raise forms.ValidationError('Please fill in only one field set.')
-        if not any([time,From,To]):
-            raise forms.ValidationError('Please fill in a field set.')
-
-
-class SpotForm(forms.Form):
-    spots = forms.MultipleChoiceField(choices=SPOT_CHOICES, widget=forms.CheckboxSelectMultiple)
-
-
 class ComboForm(forms.Form):
     spots = forms.MultipleChoiceField(choices=SPOT_CHOICES, widget=forms.CheckboxSelectMultiple)
     time = forms.ChoiceField(choices= TIME_CHOICES, required=False)
@@ -79,9 +55,6 @@ class ComboForm(forms.Form):
             raise forms.ValidationError('Please fill in only one field set.')
         if not any([time,From,To]):
             raise forms.ValidationError('Please fill in a field set.')
-
-
-
 
 
 class TopEntriesForm(forms.Form):
