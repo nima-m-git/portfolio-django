@@ -36,6 +36,19 @@ class EntryForm(forms.ModelForm):
         fields = ['spot', 'empty', 'time']
 
 
+class TimeForm(forms.Form):
+    time = time
+    time = forms.ChoiceField(choices= TIME_CHOICES, required=False)
+    From = forms.ChoiceField(choices= TIME_CHOICES, required=False)
+    To = forms.ChoiceField(choices= TIME_CHOICES, required=False)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        time = cleaned_data.get('time')
+        From = cleaned_data.get('From')
+        To = cleaned_data.get('To')
+
+
 class ComboForm(forms.Form):
     spots = forms.MultipleChoiceField(choices=SPOT_CHOICES, widget=forms.CheckboxSelectMultiple)
     time = forms.ChoiceField(choices= TIME_CHOICES, required=False)

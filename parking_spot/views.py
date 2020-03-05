@@ -9,7 +9,7 @@ from django_pandas.io import read_frame
 import pandas as pd
 
 from parking_spot.models import Entries, Statistics
-from .forms import EntryForm, TimeForm, SpotForm, spot_choices as spots, ComboForm, TopEntriesForm
+from .forms import EntryForm, spot_choices as spots, ComboForm, TopEntriesForm
 import parking_spot.functions as fx
 
 
